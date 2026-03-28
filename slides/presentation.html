@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Agents in Gemini Enterprise</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --gcp-blue: #4285F4;
+            --gcp-red: #EA4335;
+            --gcp-yellow: #FBBC04;
+            --gcp-green: #34A853;
+            --gcp-blue-light: #8AB4F8;
+            --gcp-bg-dark: #202124;
+            --gcp-bg-darker: #171717;
+            --gcp-surface: #303134;
+            --text-primary: #E8EAED;
+            --text-secondary: #9AA0A6;
+            --accent: var(--gcp-blue-light);
+            --font-display: 'Product Sans', 'Roboto', sans-serif;
+            --font-body: 'Roboto', sans-serif;
+            --font-mono: 'Roboto Mono', monospace;
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --duration-normal: 0.8s;
+            --title-size: clamp(2.5rem, 8vw, 5rem);
+            --h2-size: clamp(1.8rem, 5vw, 3.5rem);
+            --h3-size: clamp(1.2rem, 3vw, 2rem);
+            --body-size: clamp(1rem, 1.8vw, 1.3rem);
+            --slide-padding: clamp(2rem, 8vw, 8rem);
+            --content-gap: clamp(1rem, 4vw, 4rem);
+        }
+
+        /* Reset & Base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow-x: hidden;
+            background-color: var(--gcp-bg-dark);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border-bottom: 1px solid #3c4043;
+        }
+
+        .slide-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: var(--slide-padding);
+            z-index: 2;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* UI Simulator / Gemini Mockup */
+        .gemini-mockup {
+            background: var(--gcp-bg-darker);
+            border: 1px solid #3c4043;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 500px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .mockup-header {
+            background: var(--gcp-surface);
+            padding: 12px;
+            border-bottom: 1px solid #3c4043;
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #5f6368;
+        }
+
+        .mockup-content {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .user-msg {
+            align-self: flex-end;
+            background: var(--gcp-surface);
+            padding: 10px 15px;
+            border-radius: 18px 18px 4px 18px;
+            font-size: 0.9rem;
+            color: #fff;
+        }
+
+        .gemini-msg {
+            align-self: flex-start;
+            background: #3c4043;
+            padding: 10px 15px;
+            border-radius: 18px 18px 18px 4px;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            max-width: 80%;
+        }
+
+        /* A2UI Component Simulation */
+        .a2ui-card-sim {
+            background: #fff;
+            color: #1a1a1a;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+            width: 100%;
+            transform: scale(0.9);
+            transform-origin: top left;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.5s var(--ease-out-expo) forwards;
+            opacity: 0;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(20px) scale(0.9);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0) scale(0.9);
+                opacity: 1;
+            }
+        }
+
+        /* Vibe Elements */
+        .glow-ambient {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(66, 133, 244, 0.15) 0%, transparent 70%);
+            filter: blur(50px);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .brand-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            display: flex;
+            z-index: 10;
+        }
+
+        .brand-bar div {
+            flex: 1;
+        }
+
+        .bg-blue {
+            background-color: var(--gcp-blue);
+        }
+
+        .bg-red {
+            background-color: var(--gcp-red);
+        }
+
+        .bg-yellow {
+            background-color: var(--gcp-yellow);
+        }
+
+        .bg-green {
+            background-color: var(--gcp-green);
+        }
+
+        /* Typography */
+        h1 {
+            font-family: var(--font-display);
+            font-size: var(--title-size);
+            font-weight: 500;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+        }
+
+        h2 {
+            font-family: var(--font-display);
+            font-size: var(--h2-size);
+            font-weight: 400;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+            color: var(--gcp-blue-light);
+        }
+
+        p {
+            font-size: var(--body-size);
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        /* Animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity var(--duration-normal) var(--ease-out-expo), transform var(--duration-normal) var(--ease-out-expo);
+        }
+
+        .slide.visible .reveal {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 {
+            transition-delay: 0.2s;
+        }
+
+        .reveal-delay-2 {
+            transition-delay: 0.4s;
+        }
+
+        .reveal-delay-3 {
+            transition-delay: 0.6s;
+        }
+
+        /* Protocol Flow */
+        .protocol-line {
+            height: 2px;
+            background: #3c4043;
+            flex: 1;
+            position: relative;
+        }
+
+        .payload-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--gcp-yellow);
+            border-radius: 50%;
+            position: absolute;
+            top: -4px;
+            left: 0;
+            box-shadow: 0 0 10px var(--gcp-yellow);
+            animation: flow 2s infinite linear;
+        }
+
+        @keyframes flow {
+            from {
+                left: 0%;
+            }
+
+            to {
+                left: 100%;
+            }
+        }
+
+        /* Layouts */
+        .split-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: var(--content-gap);
+            align-items: center;
+        }
+
+        .code-block {
+            background: var(--gcp-bg-darker);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #3c4043;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            overflow: auto;
+            color: #e8eaed;
+            position: relative;
+            white-space: pre-wrap;
+        }
+
+        .code-block::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 2;
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+        }
+
+        .keyword {
+            color: #c678dd;
+        }
+
+        .string {
+            color: #98c379;
+        }
+
+        .property {
+            color: #e5c07b;
+        }
+
+        /* Tech Logos */
+        .tech-item {
+            transition: transform 0.3s;
+            cursor: help;
+        }
+
+        .tech-item:hover {
+            transform: translateY(-10px) scale(1.1);
+        }
+
+        .logo-symbol {
+            filter: invert(1) brightness(1.5);
+        }
+
+        /* Checklist */
+        .checkmark {
+            color: var(--gcp-green);
+            font-weight: bold;
+            font-size: 1.5rem;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.5s var(--ease-out-expo);
+        }
+
+        .slide.visible .checkmark {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .check-delay-1 {
+            transition-delay: 0.5s;
+        }
+
+        .check-delay-2 {
+            transition-delay: 1s;
+        }
+
+        .check-delay-3 {
+            transition-delay: 1.5s;
+        }
+
+        .check-delay-4 {
+            transition-delay: 2s;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="brand-bar">
+        <div class="bg-blue"></div>
+        <div class="bg-red"></div>
+        <div class="bg-yellow"></div>
+        <div class="bg-green"></div>
+    </div>
+    <div class="glow-ambient" style="top: 10%; right: 10%;"></div>
+    <div class="glow-ambient"
+        style="bottom: 10%; left: 10%; background: radial-gradient(circle, rgba(52, 168, 83, 0.1) 0%, transparent 70%);">
+    </div>
+
+    <!-- 1: TITLE -->
+    <section class="slide" id="slide-1">
+        <div class="slide-content" style="text-align: center; align-items: center;">
+            <div class="reveal" style="display: flex; align-items: center; justify-content: center; gap: 30px; margin-bottom: 2rem; background: rgba(255,255,255,0.05); padding: 20px 40px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.1);">
+                <img src="images/gemini_enterprise.png" height="60" alt="Gemini">
+                <img src="images/cloud_run.png" height="60" alt="Cloud Run">
+                <div style="width: 2px; height: 40px; background: rgba(255,255,255,0.2); margin: 0 10px;"></div>
+                <img src="images/adk_logo.png" height="40" alt="ADK">
+                <img src="images/a2a_logo.png" height="40" alt="A2A">
+                <img src="images/a2ui_logo.jpeg" height="40" alt="A2UI" style="border-radius: 4px;">
+            </div>
+            <h1 class="reveal">Dynamic Agents in<br>Gemini Enterprise</h1>
+            <h2 class="reveal" style="color: var(--text-secondary);">The A2A & A2UI Revolution</h2>
+        </div>
+    </section>
+
+    <!-- 2: ARCHITECTURE FLOW -->
+    <section class="slide" id="slide-2">
+        <div class="slide-content">
+            <h1 class="reveal">Architecture Flow</h1>
+            <p class="reveal" style="margin-bottom: 2rem; color: var(--text-secondary);">Bridging the world's most powerful reasoning engine with your secure enterprise logic.</p>
+            
+            <div style="display: flex; align-items: stretch; justify-content: space-between; gap: 20px; height: 350px;">
+                
+                <!-- ZONE 1: The Platform -->
+                <div class="reveal reveal-delay-1" style="flex: 1; background: var(--gcp-surface); padding: 20px; border-radius: 12px; border-top: 4px solid var(--gcp-blue); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                    <img src="images/gemini_enterprise.png" height="60" alt="Gemini Enterprise" style="margin-bottom: 15px;">
+                    <h3 style="color: var(--gcp-blue-light); margin-bottom: 10px;">The Platform</h3>
+                    <p style="font-size: 0.9rem;">Gemini Enterprise</p>
+                    <p style="font-size: 0.8rem; margin-top: 10px; color: var(--text-secondary);">Universal Client &<br>Native Render Engine</p>
+                    
+                    <!-- Added screenshot -->
+                    <div style="margin-top: 15px; width: 100%; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                        <img src="images/archiecture-flow-gemini-enterprise-screenshot.png" alt="Gemini Enterprise Interface" style="width: 100%; height: auto; display: block;">
+                    </div>
+                </div>
+
+                <!-- ZONE 2: The Protocols -->
+                <div style="flex: 1.5; display: flex; flex-direction: column; justify-content: space-evenly; align-items: center; position: relative;">
+                    <!-- A2A Arrow -->
+                    <div class="reveal reveal-delay-2" style="width: 100%; display: flex; align-items: center; gap: 10px;">
+                        <div style="flex: 1; height: 2px; background: var(--gcp-red);"></div>
+                        <div style="text-align: center; width: 140px;">
+                            <img src="images/a2a_logo.png" height="40" alt="A2A">
+                            <p style="font-size: 0.75rem; color: var(--gcp-red); font-weight: bold; margin-top: 5px;">A2A Protocol</p>
+                            <p style="font-size: 0.65rem; color: var(--text-secondary);">Request (JSON-RPC)</p>
+                        </div>
+                        <div style="flex: 1; height: 2px; background: var(--gcp-red); display: flex; align-items: center; justify-content: flex-end;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--gcp-red)" style="margin-right: -2px;">
+                                <path d="M5 3l14 9-14 9V3z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <!-- A2UI Arrow -->
+                    <div class="reveal reveal-delay-4" style="width: 100%; display: flex; align-items: center; gap: 10px;">
+                        <div style="flex: 1; height: 2px; background: var(--gcp-yellow); display: flex; align-items: center; justify-content: flex-start;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--gcp-yellow)" style="margin-left: -2px; transform: rotate(180deg);">
+                                <path d="M5 3l14 9-14 9V3z"/>
+                            </svg>
+                        </div>
+                        <div style="text-align: center; width: 140px;">
+                            <img src="images/a2ui_logo.jpeg" height="40" alt="A2UI" style="border-radius: 4px;">
+                            <p style="font-size: 0.75rem; color: var(--gcp-yellow); font-weight: bold; margin-top: 5px;">A2UI Protocol</p>
+                            <p style="font-size: 0.65rem; color: var(--text-secondary);">Response (UI Schema)</p>
+                        </div>
+                        <div style="flex: 1; height: 2px; background: var(--gcp-yellow);"></div>
+                    </div>
+                </div>
+
+                <!-- ZONE 3: The Custom Logic -->
+                <div class="reveal reveal-delay-3" style="flex: 1.2; background: var(--gcp-bg-darker); padding: 20px; border-radius: 12px; border: 1px solid #3c4043; border-top: 4px solid var(--gcp-green); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative;">
+                    <h3 style="color: var(--gcp-green); margin-bottom: 15px;">The Custom Logic</h3>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                        <img src="images/cloud_run.png" height="30" alt="Cloud Run">
+                        <span style="font-size: 0.9rem;">Cloud Run</span>
+                    </div>
+                    
+                    <div style="background: var(--gcp-surface); border-radius: 8px; padding: 15px; width: 100%; display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <img src="images/adk_logo.png" height="20" alt="ADK">
+                            <span style="font-size: 0.85rem; font-weight: bold;">Google ADK</span>
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px;">
+                            <span style="color: #00ffcc; font-family: var(--font-mono);">gemini-2.5-pro</span> + Tools
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3: PHASE 1 -->
+    <section class="slide" id="slide-3">
+        <div class="slide-content">
+            <h1 class="reveal">Phase 1: The Baseline</h1>
+            <div class="split-layout">
+                <div class="reveal">
+                    <p>Connecting a fresh Cloud Run instance to GE. The agent discovers itself via the
+                        <code>agent-card.json</code>.</p>
+                    <div class="code-block">
+<span class="comment">// A2A Handshake</span>
+{
+  <span class="property">"capabilities"</span>: {
+    <span class="property">"streaming"</span>: <span class="keyword">true</span>
+  },
+  <span class="property">"defaultInputModes"</span>: [
+    <span class="string">"text/plain"</span>
+  ],
+  <span class="property">"defaultOutputModes"</span>: [
+    <span class="string">"text/plain"</span>,
+    <span class="string">"application/json"</span>
+  ],
+  <span class="property">"description"</span>: <span class="string">"A helpful assistant powered by Gemini. Version 1: Text only."</span>,
+  <span class="property">"name"</span>: <span class="string">"Weather Agent V1"</span>,
+  <span class="property">"preferredTransport"</span>: <span class="string">"JSONRPC"</span>,
+  <span class="property">"protocolVersion"</span>: <span class="string">"0.3.0"</span>,
+  <span class="property">"skills"</span>: [
+    {
+      <span class="property">"description"</span>: <span class="string">"Chat with the Gemini agent about weather and more."</span>,
+      <span class="property">"examples"</span>: [
+        <span class="string">"Hello, world!"</span>,
+        <span class="string">"What's the weather in London?"</span>
+      ],
+      <span class="property">"id"</span>: <span class="string">"chat"</span>,
+      <span class="property">"name"</span>: <span class="string">"Chat Skill"</span>,
+      <span class="property">"tags"</span>: [
+        <span class="string">"chat"</span>
+      ]
+    }
+  ],
+  <span class="property">"url"</span>: <span class="string">"https://a2a-a2ui-v2-bfpwtp2iiq-uc.a.run.app"</span>,
+  <span class="property">"version"</span>: <span class="string">"1.0.0"</span>
+}</div>
+                </div>
+                <div class="reveal reveal-delay-2">
+                    <div class="gemini-mockup">
+                        <div class="mockup-header">
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                        </div>
+                        <div class="mockup-content">
+                            <div class="user-msg">Weather in London?</div>
+                            <div class="gemini-msg">It's 72° and Sunny in London!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4: A2UI EVOLUTION (CODE) -->
+    <section class="slide" id="slide-4">
+        <div class="slide-content">
+            <h1 class="reveal">A2UI Evolution: The Feature Leap</h1>
+            <p class="reveal" style="margin-bottom: 2rem; color: var(--text-secondary);">Transforming a simple data display into a full-featured, interactive micro-app.</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; align-items: start;">
+                <!-- Version 1 Snippet -->
+                <div class="reveal reveal-delay-1">
+                    <h3 style="color: var(--gcp-red); margin-bottom: 10px;">V1: The Static Baseline</h3>
+                    <div class="code-block" style="font-size: 0.65rem; height: 420px; border-left: 4px solid var(--gcp-red);">
+<span class="comment">// ❌ Manual duplication of components</span>
+{
+  <span class="property">"id"</span>: <span class="string">"day-1-row"</span>,
+  <span class="property">"component"</span>: { <span class="property">"Row"</span>: { ... } }
+},
+{
+  <span class="property">"id"</span>: <span class="string">"day-2-row"</span>,
+  <span class="property">"component"</span>: { <span class="property">"Row"</span>: { ... } }
+}
+
+<span class="comment">// ❌ Flat, hardcoded data mapping</span>
+{
+  <span class="property">"contents"</span>: [
+    { <span class="property">"key"</span>: <span class="string">"temp"</span>, <span class="property">"valueString"</span>: <span class="string">"72°"</span> }
+  ]
+}
+                    </div>
+                    <ul style="font-size: 0.8rem; margin-top: 15px; color: var(--text-secondary); padding-left: 20px;">
+                        <li>Manual layout duplication</li>
+                        <li>No client-side actions</li>
+                        <li>Static text & basic icons only</li>
+                    </ul>
+                </div>
+
+                <!-- Version 2 Snippet -->
+                <div class="reveal reveal-delay-2">
+                    <h3 style="color: var(--gcp-green); margin-bottom: 10px;">V2: The Interactive Powerhouse</h3>
+                    <div class="code-block" style="font-size: 0.65rem; height: 420px; border-left: 4px solid var(--gcp-green); overflow: hidden;">
+<span class="comment">// ✅ Rich Media & Soundscapes</span>
+{
+  <span class="property">"id"</span>: <span class="string">"dogImage"</span>,
+  <span class="property">"component"</span>: { <span class="property">"Image"</span>: { <span class="property">"url"</span>: <span class="string">"https://images.dog.ceo/..."</span> } }
+},
+<span class="comment">// ✅ Button to trigger an action</span>
+{
+  <span class="property">"id"</span>: <span class="string">"btnSF"</span>,
+  <span class="property">"component"</span>: {
+    <span class="property">"Button"</span>: {
+      <span class="property">"action"</span>: { 
+        <span class="property">"name"</span>: <span class="string">"sendText"</span>, 
+        <span class="property">"context"</span>: [ {<span class="property">"key"</span>: <span class="string">"text"</span>, <span class="property">"value"</span>: <span class="string">"@Weather Agent V2..."</span>} ] 
+      }
+    }
+  }
+}
+
+<span class="comment">// ✅ Interactive Unit Toggles (°C/°F)</span>
+{
+  <span class="property">"id"</span>: <span class="string">"btnCelsius"</span>,
+  <span class="property">"component"</span>: {
+    <span class="property">"Button"</span>: {
+      <span class="property">"action"</span>: { 
+        <span class="property">"name"</span>: <span class="string">"sendText"</span>, 
+        <span class="property">"context"</span>: [ {<span class="property">"key"</span>: <span class="string">"text"</span>, <span class="property">"value"</span>: <span class="string">"Show in °C"</span>} ] 
+      }
+    }
+  }
+}
+
+<span class="comment">// ✅ Smart Data Loops</span>
+{
+  <span class="property">"List"</span>: { <span class="property">"template"</span>: { <span class="property">"dataBinding"</span>: <span class="string">"/forecast"</span> } }
+}
+                    </div>
+                    <div style="display: flex; gap: 15px; margin-top: 15px;">
+                        <span style="background: rgba(52, 168, 83, 0.1); color: var(--gcp-green); font-size: 0.7rem; padding: 4px 10px; border-radius: 4px; border: 1px solid var(--gcp-green);">Interactive Buttons</span>
+                        <span style="background: rgba(66, 133, 244, 0.1); color: var(--gcp-blue-light); font-size: 0.7rem; padding: 4px 10px; border-radius: 4px; border: 1px solid var(--gcp-blue-light);">Multi-modal Audio</span>
+                        <span style="background: rgba(251, 188, 4, 0.1); color: var(--gcp-yellow); font-size: 0.7rem; padding: 4px 10px; border-radius: 4px; border: 1px solid var(--gcp-yellow);">Dynamic Images</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5: PHASE 2 RESULT -->
+    <section class="slide" id="slide-5">
+        <div class="slide-content">
+            <h1 class="reveal">The Instant Result</h1>
+            <div class="split-layout">
+                <div class="reveal">
+                    <p>Prompting again. Gemini renders the new A2UI payload immediately. Dynamic, colorful, and
+                        interactive.</p>
+                    <div class="code-block" style="font-size: 0.75rem;">
+<span class="comment">// The resulting A2UI payload</span>
+{
+  <span class="property">"id"</span>: <span class="string">"dogImage"</span>,
+  <span class="property">"component"</span>: {
+    <span class="property">"Image"</span>: {
+      <span class="property">"url"</span>: <span class="string">"..."</span>,
+      <span class="property">"fit"</span>: <span class="string">"cover"</span>
+    }
+  }
+}
+                    </div>
+                </div>
+                <div class="reveal reveal-delay-2">
+                    <div class="gemini-mockup">
+                        <div class="mockup-header">
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                        </div>
+                        <div class="mockup-content">
+                            <div class="user-msg">Weather in London?</div>
+                            <div class="gemini-msg">It's a paws-itively beautiful day in London!</div>
+                            <div class="a2ui-card-sim" style="border: 4px solid var(--gcp-blue); background: #f8f9fa; display: flex; flex-direction: column; gap: 8px;">
+                                <h4 style="font-size: 0.8rem; margin-bottom: 2px;">Dog Weather App</h4>
+                                
+                                <!-- Audio Simulation -->
+                                <div style="display: flex; align-items: center; gap: 8px; background: #eee; padding: 5px 10px; border-radius: 20px; font-size: 10px; color: #333;">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                    <span>Playing: Sunny Soundscape</span>
+                                </div>
+
+                                <div style="height: 60px; border-radius: 4px; overflow: hidden;">
+                                    <img src="https://images.dog.ceo/breeds/retriever-golden/n02099601_3004.jpg" style="width: 100%; height: 100%; object-fit: cover;" alt="Dog Image">
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1rem; color: #1a1a1a;">
+                                    <span>London</span><span>72°F</span>
+                                </div>
+
+                                <!-- Unit Toggles -->
+                                <div style="display: flex; gap: 5px; justify-content: center;">
+                                    <div style="font-size: 9px; padding: 3px 8px; border: 1px solid #ccc; border-radius: 4px; background: #fff; color: #666;">°C</div>
+                                    <div style="font-size: 9px; padding: 3px 8px; border: 1px solid var(--gcp-blue); border-radius: 4px; background: var(--gcp-blue); color: #fff;">°F</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6: WHY A2UI? -->
+    <section class="slide" id="slide-6">
+        <div class="slide-content">
+            <h1 class="reveal">Why A2UI?</h1>
+            <p class="reveal" style="margin-bottom: 2rem; color: var(--text-secondary);">The declarative standard for Agent-to-User Interfaces.</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <!-- Column 1: Core Value -->
+                <div class="reveal reveal-delay-1" style="background: var(--gcp-surface); padding: 25px; border-radius: 12px; border-top: 4px solid var(--gcp-blue);">
+                    <h3 style="color: #fff; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--gcp-blue-light)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                        What is A2UI?
+                    </h3>
+                    <p style="font-size: 0.9rem; color: var(--text-primary); margin-bottom: 10px;">A2UI is a <strong>declarative UI protocol</strong> that allows agents to send structured JSON instead of raw code.</p>
+                    <ul style="font-size: 0.85rem; color: var(--text-secondary); padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
+                        <li><strong>Data, Not Code:</strong> Eliminates malicious script execution by design.</li>
+                        <li><strong>Native Performance:</strong> Renders as native widgets (React, Flutter, SwiftUI).</li>
+                        <li><strong>LLM-Friendly:</strong> Optimized for real-time streaming and incremental generation.</li>
+                    </ul>
+                </div>
+
+                <!-- Column 2: When to Use -->
+                <div class="reveal reveal-delay-2" style="background: var(--gcp-surface); padding: 25px; border-radius: 12px; border-top: 4px solid var(--gcp-green);">
+                    <h3 style="color: #fff; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--gcp-red)"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.59-13L12 10.59 8.41 7 7 8.41 10.59 12 7 15.59 8.41 17 12 13.41 15.59 17 17 15.59 13.41 12 17 8.41 15.59 7z"/></svg>
+                        What A2UI is NOT
+                    </h3>
+                    <ul style="font-size: 0.85rem; color: var(--text-secondary); padding-left: 20px; display: flex; flex-direction: column; gap: 12px;">
+                        <li><strong style="color: var(--text-primary);">Not a Framework:</strong> It's a cross-platform <strong>protocol</strong> for UI declaration.</li>
+                        <li><strong style="color: var(--text-primary);">Not an HTML Replacement:</strong> Built for <strong>agent UIs</strong>, not for static websites.</li>
+                        <li><strong style="color: var(--text-primary);">Not a Styling System:</strong> The <strong>client</strong> controls the brand; the agent provides the structure.</li>
+                        <li><strong style="color: var(--text-primary);">Not Web-Only:</strong> Designed to work natively on <strong>iOS, Android, & Desktop</strong>.</li>
+                    </ul>
+                </div>
+
+                <!-- Bottom Row: Managed Boundary -->
+                <div class="reveal reveal-delay-3" style="grid-column: span 2; background: var(--gcp-bg-darker); padding: 20px; border-radius: 12px; border: 1px solid #3c4043; display: flex; align-items: center; gap: 30px;">
+                    <div style="flex: 1;">
+                        <h4 style="color: var(--gcp-yellow); margin-bottom: 5px;">Enterprise Secure</h4>
+                        <p style="font-size: 0.85rem;">Logic and credentials never leave your Cloud boundary. Gemini only sees the declarative UI it needs to render natively.</p>
+                    </div>
+                    <div style="flex: 1; border-left: 1px solid #3c4043; padding-left: 30px;">
+                        <h4 style="color: var(--gcp-red); margin-bottom: 5px;">Verified Discovery</h4>
+                        <p style="font-size: 0.85rem;">Enterprise-grade auth via A2A ensures only trusted agents can communicate with your workspace.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 7: RECAP -->
+    <section class="slide" id="slide-7">
+        <div class="slide-content">
+            <h1 class="reveal">Recap: What we covered</h1>
+            <div style="display: flex; flex-direction: column; gap: 20px; margin: 2rem 0;">
+                <div class="reveal reveal-delay-1" style="display: flex; gap: 15px; font-size: 1.2rem;"><span
+                        class="checkmark check-delay-1">✔</span>
+                    <div>Cloud Run A2A agent connecting to Gemini Enterprise</div>
+                </div>
+                <div class="reveal reveal-delay-2" style="display: flex; gap: 15px; font-size: 1.2rem;"><span
+                        class="checkmark check-delay-2">✔</span>
+                    <div>A2UI interactive demo rendering live in GE</div>
+                </div>
+                <div class="reveal reveal-delay-3" style="display: flex; gap: 15px; font-size: 1.2rem;"><span
+                        class="checkmark check-delay-3">✔</span>
+                    <div>Backend-only updates and instant redeployment</div>
+                </div>
+                <div class="reveal reveal-delay-4" style="display: flex; gap: 15px; font-size: 1.2rem;"><span
+                        class="checkmark check-delay-4">✔</span>
+                    <div>Dynamic UI evolution with zero frontend code</div>
+                </div>
+            </div>
+
+            <div class="reveal reveal-delay-3"
+                style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-top: 4rem; text-align: center;">
+                <div class="tech-item"><img src="images/gemini_enterprise.png" height="40" alt="GE">
+                    <p style="font-size: 0.7rem; margin-top: 5px;">Gemini Enterprise</p>
+                </div>
+                <div class="tech-item"><img src="images/cloud_run.png" height="40" alt="CR">
+                    <p style="font-size: 0.7rem; margin-top: 5px;">Cloud Run</p>
+                </div>
+                <div class="tech-item"><img src="images/adk_logo.png" height="40" alt="ADK">
+                    <p style="font-size: 0.7rem; margin-top: 5px;">ADK</p>
+                </div>
+                <div class="tech-item"><img src="images/a2a_logo.png" height="40" alt="A2A">
+                    <p style="font-size: 0.7rem; margin-top: 5px;">A2A</p>
+                </div>
+                <div class="tech-item"><img src="images/a2ui_logo.jpeg" height="40" alt="A2UI">
+                    <p style="font-size: 0.7rem; margin-top: 5px;">A2UI</p>
+                </div>
+            </div>
+
+            <div class="reveal reveal-delay-4" style="text-align: center; margin-top: 3rem;">
+                <p style="font-family: var(--font-mono); color: #fff;">adventofagents.com | Day 31</p>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        class SlidePresentation {
+            constructor() {
+                this.slides = document.querySelectorAll('.slide');
+                this.setupIntersectionObserver();
+                this.setupKeyboardNav();
+            }
+            setupIntersectionObserver() {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+                }, { threshold: 0.4 });
+                this.slides.forEach(slide => observer.observe(slide));
+            }
+            setupKeyboardNav() {
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ') {
+                        e.preventDefault(); window.scrollBy({ top: window.innerHeight, behavior: 'smooth' });
+                    } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                        e.preventDefault(); window.scrollBy({ top: -window.innerHeight, behavior: 'smooth' });
+                    }
+                });
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => new SlidePresentation());
+    </script>
+</body>
+
+</html>                        e.preventDefault(); window.scrollBy({ top: window.innerHeight, behavior: 'smooth' });
+                    } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                        e.preventDefault(); window.scrollBy({ top: -window.innerHeight, behavior: 'smooth' });
+                    }
+                });
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => new SlidePresentation());
+    </script>
+</body>
+
+</html>
