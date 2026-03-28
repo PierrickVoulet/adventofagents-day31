@@ -84,7 +84,7 @@ WEATHER_UI_EXAMPLE = """
                 "path": "/weather/dogImageUrl"
               },
               "fit": "cover",
-              "usageHint": "mediumFeature"
+              "usageHint": "smallFeature"
             }
           }
         },
@@ -236,7 +236,7 @@ WEATHER_UI_EXAMPLE = """
                 "path": "./iconUrl"
               },
               "fit": "contain",
-              "usageHint": "mediumFeature"
+              "usageHint": "icon"
             }
           }
         },
