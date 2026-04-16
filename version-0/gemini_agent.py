@@ -1,7 +1,9 @@
 """Gemini agent for A2UI sample."""
 
+import json
 import os
-
+import urllib.parse
+import urllib.request
 from a2a import types
 from a2ui_examples import CONTACT_UI_EXAMPLES
 import a2ui_schema
@@ -19,61 +21,55 @@ def get_contact_info(name: str = None) -> str:
   Returns:
       JSON string containing contact details.
   """
-  # Mock data
-  if name and "alex" in name.lower():
-    return """
-        {
-            "name": "Alex Jordan",
-            "title": "Software Engineer",
-            "team": "Cloud AI",
-            "location": "Sunnyvale, CA",
-            "email": "alexj@example.com",
-            "mobile": "+1-555-0102",
-            "calendar": "Available until 4PM",
-            "imageUrl": "https://example.com/alex_jordan.jpg"
-        }
-        """
-  elif (
-      name and "jordan" in name.lower()
-  ):  # Match "jordan" to Alex Jordan as well for robustness
-    return """
-        {
-            "name": "Alex Jordan",
-            "title": "Software Engineer",
-            "team": "Cloud AI",
-            "location": "Sunnyvale, CA",
-            "email": "alexj@example.com",
-            "mobile": "+1-555-0102",
-            "calendar": "Available until 4PM",
-            "imageUrl": "https://example.com/alex_jordan.jpg"
-        }
-        """
+  access_token = os.environ.get("ACCESS_TOKEN")
+  if not access_token:
+    return "[]"
 
-  # Default list if no specific name match or no name provided
-  return """
-    [
-        {
-            "name": "Alex Jordan",
-            "title": "Software Engineer",
-            "team": "Cloud AI",
-            "location": "Sunnyvale, CA",
-            "email": "alexj@example.com",
-            "mobile": "+1-555-0102",
-            "calendar": "Available until 4PM",
-            "imageUrl": "https://example.com/alex_jordan.jpg"
-        },
-        {
-            "name": "Casey Smith",
-            "title": "Product Manager",
-            "team": "Cloud UI",
-            "location": "New York, NY",
-            "email": "caseys@example.com",
-            "mobile": "+1-555-0103",
-            "calendar": "In a meeting",
-            "imageUrl": "https://example.com/casey_smith.jpg"
-        }
-    ]
-    """
+  try:
+    if name:
+      query = urllib.parse.quote(name)
+      url = f"https://people.googleapis.com/v1/people:searchContacts?query={query}&readMask=names,emailAddresses,phoneNumbers,organizations,locations"
+    else:
+      url = "https://people.googleapis.com/v1/people/me/connections?readMask=names,emailAddresses,phoneNumbers,organizations,locations&pageSize=10"
+
+    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {access_token}"})
+    with urllib.request.urlopen(req) as response:
+      data = json.loads(response.read())
+
+      contacts = []
+      items = data.get("results", data.get("connections", []))
+      for item in items:
+        person = item.get("person", item)
+
+        name_val = person.get("names", [{}])[0].get("displayName", "Unknown")
+        email_val = person.get("emailAddresses", [{}])[0].get("value", "")
+        phone_val = person.get("phoneNumbers", [{}])[0].get("value", "")
+        
+        orgs = person.get("organizations", [{}])
+        org = orgs[0] if orgs else {}
+        title_val = org.get("title", "")
+        team_val = org.get("department", "")
+
+        locs = person.get("locations", [{}])
+        loc = locs[0] if locs else {}
+        loc_val = loc.get("value", "Unknown")
+
+        contacts.append({
+            "name": name_val,
+            "title": title_val,
+            "team": team_val,
+            "location": loc_val,
+            "email": email_val,
+            "mobile": phone_val,
+            "calendar": "Available"
+        })
+
+      if name and len(contacts) >= 1:
+        return json.dumps(contacts[0])
+      return json.dumps(contacts)
+  except Exception as e:
+    print(f"Error calling People API: {e}")
+    return "[]"
 
 
 def get_ui_prompt(examples: str) -> str:

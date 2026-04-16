@@ -27,8 +27,7 @@ CONTACT_UI_EXAMPLES = """
       { "id": "title-heading", "component": { "Text": { "usageHint": "h1", "text": { "literalString": "Found Contacts" } } } },
       { "id": "item-list", "component": { "List": { "direction": "vertical", "children": { "template": { "componentId": "item-card-template", "dataBinding": "/contacts" } } } } },
       { "id": "item-card-template", "component": { "Card": { "child": "card-layout" } } },
-      { "id": "card-layout", "component": { "Row": { "children": { "explicitList": ["template-image", "card-details", "view-button"] }, "alignment": "center" } } },
-      { "id": "template-image", "component": { "Image": { "url": { "path": "imageUrl" }, "fit": "cover" } } },
+      { "id": "card-layout", "component": { "Row": { "children": { "explicitList": ["card-details", "view-button"] }, "alignment": "center" } } },
       { "id": "card-details", "component": { "Column": { "children": { "explicitList": ["template-name", "template-title"] } } } },
       { "id": "template-name", "component": { "Text": { "usageHint": "h3", "text": { "path": "name" } } } },
       { "id": "template-title", "component": { "Text": { "text": { "path": "title" } } } },
@@ -45,7 +44,6 @@ CONTACT_UI_EXAMPLES = """
           {{ "key": "name", "valueString": "Alice Wonderland" }},
           {{ "key": "phone", "valueString": "+1-555-123-4567" }},
           {{ "key": "email", "valueString": "alice@example.com" }},
-          {{ "key": "imageUrl", "valueString": "https://example.com/alice.jpg" }},
           {{ "key": "title", "valueString": "Mad Hatter" }},
           {{ "key": "department", "valueString": "Wonderland" }}
         ] }},
@@ -53,7 +51,6 @@ CONTACT_UI_EXAMPLES = """
           {{ "key": "name", "valueString": "Bob The Builder" }},
           {{ "key": "phone", "valueString": "+1-555-765-4321" }},
           {{ "key": "email", "valueString": "bob@example.com" }},
-          {{ "key": "imageUrl", "valueString": "https://example.com/bob.jpg" }},
           {{ "key": "title", "valueString": "Construction" }},
           {{ "key": "department", "valueString": "Building" }}
         ] }}
@@ -69,7 +66,6 @@ CONTACT_UI_EXAMPLES = """
   { "beginRendering": { "surfaceId":"contact-card","root":"main_card"} },
   { "surfaceUpdate": { "surfaceId":"contact-card",
     "components":[
-      { "id": "profile_image", "component": { "Image": { "url": { "path": "imageUrl"}, "usageHint": "avatar", "fit": "cover" } } } ,
       { "id": "user_heading", "weight": 1, "component": { "Text": { "text": { "path": "name"} , "usageHint": "h2"} } } ,
       { "id": "description_text_1", "component": { "Text": { "text": { "path": "title"} } } } ,
       { "id": "description_text_2", "component": { "Text": { "text": { "path": "team"} } } } ,
@@ -100,7 +96,7 @@ CONTACT_UI_EXAMPLES = """
       { "id": "action_buttons_row", "component": { "Row": { "children": { "explicitList": ["button_1", "button_2"]} , "distribution": "center", "alignment": "center"} } } ,
       { "id": "link_text", "component": { "Text": { "text": { "literalString": "[View Full Profile](/profile)"} } } } ,
       { "id": "link_text_wrapper", "component": { "Row": { "children": { "explicitList": ["link_text"]} , "distribution": "center", "alignment": "center"} } } ,
-      { "id": "main_column", "component": { "Column": { "children": { "explicitList": ["profile_image", "description_column", "div", "info_rows_column", "action_buttons_row", "link_text_wrapper"]} , "alignment": "stretch"} } } ,
+      { "id": "main_column", "component": { "Column": { "children": { "explicitList": ["description_column", "div", "info_rows_column", "action_buttons_row", "link_text_wrapper"]} , "alignment": "stretch"} } } ,
       { "id": "main_card", "component": { "Card": { "child": "main_column"} } }
     ]
   } },
@@ -114,8 +110,7 @@ CONTACT_UI_EXAMPLES = """
       { "key": "location", "valueString": "" },
       { "key": "email", "valueString": "" },
       { "key": "mobile", "valueString": "" },
-      { "key": "calendar", "valueString": "" },
-      { "key": "imageUrl", "valueString": "" }
+      { "key": "calendar", "valueString": "" }
     ]
   } }
 ]
